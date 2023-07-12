@@ -1,21 +1,25 @@
-function results = plot_combi_01(results,filename)
+function results = plot_combi_01(data)
 % TO DO
 % -
 
 monitor_no = 3; % choose monitor
 
-
 scrsz = get(0,'MonitorPositions');
-if monitor_no > size(scrsz,1)
-    monitor_no = 1; 
+while monitor_no > size(scrsz,1)
+    monitor_no = monitor_no - 1; 
 end
-data_path = [fileparts(which(mfilename)) '\..\..\..\DATA\'];
 
-if isempty(results) && exist('filename','Var') % Data field is only filled the first time
-    load([data_path filename],'results')
+data_path = [fileparts(which(mfilename)) '\..\..\..\DATA\'];
+if isstruct(data) %resutls can eb a filename
+    results = data;
 else
-    error('give either $resutls or $filename as parameter!')
+    try
+        load([data_path data],'results')
+    catch
+        error('Give either $results or filename as parameter!')
+    end
 end
+
 if ~isfield(results,'data') % plot combi runs the first time (monitor_combi does only save raw recordings)
     no_prmSets = size(results.stimulus.original_parameter_table,1);
     monitor_settings = monitor_init_combi_01(results);
@@ -31,7 +35,7 @@ if ~isfield(results,'data') % plot combi runs the first time (monitor_combi does
         end
         results.data.presentation(q) = monitor_combi_01([],interval_order(q),results,wave,monitor_settings,0);
     end
-    save([data_path filename],'results','-append')
+    save([data_path data],'results','-append')
 end
 
 plot_time_series_spectral_line_cronologically(results,scrsz(monitor_no,:));
@@ -47,13 +51,13 @@ series.H_mod_f2_f1 = [results.data.presentation(:).H_mod_f2_f1];
 series.H_modCM_f2_f1 = [results.data.presentation(:).H_modCM_f2_f1];
 series.H_modCM_2f1_f2 = [results.data.presentation(:).H_modCM_2f1_f2];
 series.H_mod_f2 = [results.data.presentation(:).H_mod_f2];
-series.l_SF = [results.data.presentation(:).l_SF];
+series.l_unmod_SF_f2 = [results.data.presentation(:).l_unmod_SF_f2];
 series.H_modCM_f2 = [results.data.presentation(:).H_modCM_f2];
 series.l_unmodCM_f2 = [results.data.presentation(:).l_unmodCM_f2];
 series.CAP_ampl = [results.data.presentation(:).CAP_ampl];
 
-h_fig = figure(get_figure_h([scrsz(1)+round(scrsz(3)/4*3),scrsz(2)+40,...
-    round(scrsz(3)/4),round(scrsz(4)-100)])); clf
+h_fig = figure(get_figure_h([scrsz(1)+round(scrsz(3)/4*3),scrsz(2)+52,...
+    round(scrsz(3)/4),round(scrsz(4)-110)])); clf
 setappdata(h_fig,'results',results)
 setappdata(h_fig,'series',series)
 setappdata(h_fig,'scrsz',scrsz)
@@ -111,13 +115,13 @@ series.H_mod_f2_f1 = [avg(:).H_mod_f2_f1];
 series.H_modCM_f2_f1 = [avg(:).H_modCM_f2_f1];
 series.H_modCM_2f1_f2 = [avg(:).H_modCM_2f1_f2];
 series.H_mod_f2 = [avg(:).H_mod_f2];
-series.l_SF = [avg(:).l_SF];
+series.l_unmod_SF_f2 = [avg(:).l_unmod_SF_f2];
 series.H_modCM_f2 = [avg(:).H_modCM_f2];
 series.l_unmodCM_f2 = [avg(:).l_unmodCM_f2];
 series.CAP_ampl = [avg(:).CAP_ampl];
 
-h_fig = figure(get_figure_h([scrsz(1)+round(scrsz(3)/4*3),scrsz(2)+40,...
-    round(scrsz(3)/4),round(scrsz(4)-100)])); clf
+h_fig = figure(get_figure_h([scrsz(1)+round(scrsz(3)/4*3),scrsz(2)+52,...
+    round(scrsz(3)/4),round(scrsz(4)-110)])); clf
 results.data.avg = avg;
 setappdata(h_fig,'results',results)
 setappdata(h_fig,'series',series)
@@ -126,7 +130,7 @@ set(h_fig,'Name',['Avg series' results.header.title])
 uicontrol('Parent',h_fig, ...
 	'BusyAction','cancel', ...
 	'Callback',@CB_toggle_series, ...
-	'Position',[1 1 60 10], ...
+	'Position',[1 1 60 15], ...
 	'String','plot chrono', ...
 	'Style','pushbutton', ...
 	'Tag','pushbutton_toggle', ...
@@ -134,7 +138,7 @@ uicontrol('Parent',h_fig, ...
 uicontrol('Parent',h_fig, ...
 	'BusyAction','cancel', ...
 	'Callback',@CB_plot_prmSet, ...
-	'Position',[65 1 60 10], ...
+	'Position',[65 1 60 15], ...
 	'String','plot prmSet', ...
 	'Style','pushbutton', ...
 	'Tag','pushbutton_plot_prmSet', ...

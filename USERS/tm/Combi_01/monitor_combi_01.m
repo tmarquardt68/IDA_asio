@@ -18,6 +18,7 @@ H_mic = [H_mic(1:end/2,1) ones(fs/10,1)];
 f_BT = results.stimulus.original_parameter_table(prmSet,2);
 f1 = results.stimulus.original_parameter_table(prmSet,3);
 f2 = results.stimulus.original_parameter_table(prmSet,4);
+l = fs/10;
 
 %% get relevant spectral line numbers
 
@@ -35,14 +36,33 @@ mod_2f1_f2(4) = (2*f1-f2+f_BT)/10+1;
 mod_2f1_f2(5) = (2*f1-f2+2*f_BT)/10+1;
 result.modlines_2f1_f2 = mod_2f1_f2;
 
+mod_2f2_f1(1) = (2*f2-f1-2*f_BT)/10+1;
+mod_2f2_f1(2) = (2*f2-f1-f_BT)/10+1;
+mod_2f2_f1(3) = (2*f2-f1)/10+1;
+mod_2f2_f1(4) = (2*f2-f1+f_BT)/10+1;
+mod_2f2_f1(5) = (2*f2-f1+2*f_BT)/10+1;
+result.modlines_2f2_f1 = mod_2f2_f1;
+
 mod_f2(1) = (f2-2*f_BT)/10+1;
 mod_f2(2) = (f2-f_BT)/10+1;
 mod_f2(3) = (f2)/10+1;
 mod_f2(4) = (f2+f_BT)/10+1;
 mod_f2(5) = (f2+2*f_BT)/10+1;
 result.modlines_f2 = mod_f2;
-l = fs/10;
 
+mod_f1(1) = (f1-2*f_BT)/10+1;
+mod_f1(2) = (f1-f_BT)/10+1;
+mod_f1(3) = (f1)/10+1;
+mod_f1(4) = (f1+f_BT)/10+1;
+mod_f1(5) = (f1+2*f_BT)/10+1;
+result.modlines_f1 = mod_f1;
+
+mod_2f1(1) = (2*f1-2*f_BT)/10+1;
+mod_2f1(2) = (2*f1-f_BT)/10+1;
+mod_2f1(3) = (2*f1)/10+1;
+mod_2f1(4) = (2*f1+f_BT)/10+1;
+mod_2f1(5) = (2*f1+2*f_BT)/10+1;
+result.modlines_2f1= mod_2f1;
 
 %% CAP
 % unsuppressed CAP
@@ -105,46 +125,51 @@ result.course_BT = course(1:2/f_BT*fs)/max(course);
 [~,idx_BT_CAP]=max(result.course_BT_CAP(1:fs/f_BT));
 circshift_amount = idx_BT_CAP - idx_BT;
 
-%% get some levels 
-% get pure speaker primaries in ear canal
+%% biasing tone OFF %%
+% get pure speaker primaries in ear canal during SFOAE suppression 
 avg_wave = (wave(16400 + latency+1 : fs/10 + 16400 + latency,:) ...
     - wave(23600 + latency+1 : fs/10 + 23600 + latency,:))/2;
 H_wave_suppr2 = fft(circshift(avg_wave,circshift_amount));
-result.l2_suppr = H_wave_suppr2(f2/10+1,1)./H_mic(f2/10+1);
-result.supprCM_l2 = H_wave_suppr2(f2/10+1,2);
+result.suppr_f2 = H_wave_suppr2(f2/10+1,1)./H_mic(f2/10+1);
+result.supprCM_f2 = H_wave_suppr2(f2/10+1,2);
 
 avg_wave =  wave(45200 + latency+1 : fs/10 + 45200 + latency,:);
 H_wave_suppr1 = fft(circshift(avg_wave,circshift_amount));
-result.l1_suppr = H_wave_suppr1(f1/10+1,1)./H_mic(f1/10+1);
-result.supprCM_l1 = H_wave_suppr1(f1/10+1,2);
+result.suppr_f1 = H_wave_suppr1(f1/10+1,1)./H_mic(f1/10+1);
+result.supprCM_f1 = H_wave_suppr1(f1/10+1,2);
+result.supprCM_2f1 = H_wave_suppr1(f1/10+1,2);
 
-% get SF0AE level
+% get unmodulated SF0AE level
 avg_wave = (wave(2000 + latency+1 : fs/10 + 2000 + latency,:) ...
     - wave(9200 + latency+1 : fs/10 + 9200 + latency,:))/2;
 H_wave_SF = fft(circshift(avg_wave,circshift_amount));
-result.l_SF = H_wave_SF(f2/10+1,1)./H_mic(f2/10+1)-result.l2_suppr;
+result.l_unmod_SF_f2 = H_wave_SF(f2/10+1,1)./H_mic(f2/10+1)-result.suppr_f2;
 result.l_unmodCM_f2 = H_wave_SF(f2/10+1,2);
 
-% get unsuppressed DPOAE and SF0AE at DP primaries
+% get unmodulated DPOAE and SF0AE at DP primaries
 avg_wave = (wave(30800 + latency+1 : fs/10 + 30800 + latency,:) ...
     - wave(38000 + latency+1 : fs/10 + 38000 + latency,:))/2;
-H_wave_DPodd = fft(circshift(avg_wave,circshift_amount));
+H_wave_unmod_DPodd = fft(circshift(avg_wave,circshift_amount));
 
 avg_wave = (wave(30800 + latency+1 : fs/10 + 30800 + latency,:) ...
     + wave(38000 + latency+1 : fs/10 + 38000 + latency,:))/2;
-H_wave_DPeven = fft(circshift(avg_wave,circshift_amount));
+H_wave_unmod_DPeven = fft(circshift(avg_wave,circshift_amount));
 
-result.l_2f1_f2 = H_wave_DPodd((2*f1-f2)/10+1,1)./H_mic((2*f1-f2)/10+1);
-result.l_unmodCM_2f1_f2 = H_wave_DPodd((2*f1-f2)/10+1,2);
-result.l_f2_f1 = H_wave_DPodd((f2-f1)/10+1,1)./H_mic((f2-f1)/10+1);
-result.l_unmodCM_f2_f1 = H_wave_DPodd((f2-f1)/10+1,2);
-result.l_SF_DPf1 = H_wave_DPeven(f1/10+1,1)./H_mic(f1/10+1)-result.l1_suppr;
-result.l_unmodCM_DPf1 = H_wave_DPeven(f1/10+1,2);
-result.l_SF_DPf2 = H_wave_DPodd(f2/10+1,1)./H_mic(f2/10+1)-result.l2_suppr;
-result.l_unmodCM_DPf2 = H_wave_DPodd(f2/10+1,2);
+result.l_unmod_2f1_f2 = H_wave_unmod_DPodd((2*f1-f2)/10+1,1)./H_mic((2*f1-f2)/10+1);
+result.l_unmodCM_2f1_f2 = H_wave_unmod_DPodd((2*f1-f2)/10+1,2);
+result.l_unmod_f2_f1 = H_wave_unmod_DPodd((f2-f1)/10+1,1)./H_mic((f2-f1)/10+1);
+result.l_unmodCM_f2_f1 = H_wave_unmod_DPodd((f2-f1)/10+1,2);
+result.l_unmod_2f2_f1 = H_wave_unmod_DPeven((2*f2-f1)/10+1,1)./H_mic((2*f2-f1)/10+1);
+result.l_unmodCM_2f2_f1 = H_wave_unmod_DPeven((2*f2-f1)/10+1,1)./H_mic((2*f2-f1)/10+1);
+result.l_unmod_SF_DPf1 = H_wave_unmod_DPeven(f1/10+1,1)./H_mic(f1/10+1)-result.suppr_f1;
+result.l_unmodCM_DPf1 = H_wave_unmod_DPeven(f1/10+1,2);
+result.l_unmod_SF_DPf2 = H_wave_unmod_DPodd(f2/10+1,1)./H_mic(f2/10+1)-result.suppr_f2;
+result.l_unmodCM_DPf2 = H_wave_unmod_DPodd(f2/10+1,2);
+result.l_unmodCM_2f1 = H_wave_unmod_DPeven(2*f1/10+1,2);
 
 
-%% modDP
+%% biasing tone ON %%
+%% simulataneously presented primaries (modDP)
 modDP1_start = 74000 + latency;
 avg_wave = zeros(fs/10,2);
 for q = 0:7
@@ -163,16 +188,94 @@ result.H_modDP_2=fft(circshift(avg_wave,circshift_amount))./H_mic;
 
 H_mod_DPodd = (result.H_modDP_1-result.H_modDP_2)/2;
 H_mod_DPeven = (result.H_modDP_1+result.H_modDP_2)/2;
-result.l_SF_modDPf2 = H_mod_DPodd(f2/10+1,1) - result.l2_suppr;
-result.l_SF_modDPf1 = H_mod_DPeven(f1/10+1,1) - result.l1_suppr;
 
+% BT time course
 result.l_BT_ec = result.H_modDP_2(f_BT/10+1);
 H_f_BT = zeros(l,1);
 H_f_BT(f_BT/10+1) = result.l_BT_ec;
 course = real(ifft(H_f_BT));
 result.course_BT = course(1:2/f_BT*fs)/max(course);
 
-%% modSF
+% 2f1-f2 suppression time courses
+mod_mask = zeros(l,1);
+mod_mask(mod_2f1_f2) = 1;
+
+result.H_mod_2f1_f2 = H_mod_DPodd(mod_2f1_f2,1);
+course = abs(ifft(H_mod_DPodd(:,1) .* mod_mask));
+result.mod_2f1_f2_course = 20*log10(l * course(1:2/f_BT*fs));
+
+result.H_modCM_2f1_f2 = H_mod_DPodd(mod_2f1_f2,2);
+course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
+result.modCM_2f1_f2_course = 20*log10(l * course(1:2/f_BT*fs));
+
+% f2-f1 suppression time courses
+mod_mask = zeros(l,1);
+mod_mask(mod_f2_f1) = 1;
+
+result.H_mod_f2_f1 = H_mod_DPodd(mod_f2_f1,1);
+course = abs(ifft(H_mod_DPodd(:,1) .* mod_mask));
+result.mod_f2_f1_course = 20*log10(l * course(1:2/f_BT*fs));
+
+result.H_modCM_f2_f1 = H_mod_DPodd(mod_f2_f1,2);
+course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
+result.modCM_f2_f1_course = 20*log10(l * course(1:2/f_BT*fs));
+
+% 2f2-f1 suppression time courses
+mod_mask = zeros(l,1);
+mod_mask(mod_2f2_f1) = 1;
+
+result.H_modCM_2f2_f1 = H_mod_DPeven(mod_2f2_f1,2);
+course = abs(ifft(H_mod_DPeven(:,2) .* mod_mask));
+result.modCM_2f2_f1_course = 20*log10(l * course(1:2/f_BT*fs));
+
+result.H_mod_2f2_f1 = H_mod_DPeven(mod_2f2_f1,1);
+course = abs(ifft(H_mod_DPeven(:,1) .* mod_mask));
+result.mod_2f2_f1_course = 20*log10(l * course(1:2/f_BT*fs));
+
+% 2f1 suppression time courses
+mod_mask = zeros(l,1);
+mod_mask(mod_2f1) = 1;
+
+result.H_modCM_2f1 = H_mod_DPeven(mod_2f1,2);
+course = abs(ifft(H_mod_DPeven(:,2) .* mod_mask));
+result.modCM_2f1_course = 20*log10(l * course(1:2/f_BT*fs));
+
+result.H_mod_2f1 = H_mod_DPeven(mod_2f1,1);
+course = abs(ifft(H_mod_DPeven(:,1) .* mod_mask));
+result.mod_2f1_course = 20*log10(l * course(1:2/f_BT*fs));
+
+% time courses of f1-SFOAE produced during simulataneously presented primaries and biasing tone
+result.l_SF_modDPf1 = H_mod_DPeven(f1/10+1,1) - result.suppr_f1;
+mod_mask = zeros(l,1);
+mod_mask(mod_f1) = 1;
+
+result.H_modCM_DPf1 = H_mod_DPeven(mod_f1,2);
+course = abs(ifft(H_mod_DPeven(:,2) .* mod_mask));
+result.modCM_DPf1_course = 20*log10(l * course(1:2/f_BT*fs));
+
+H = H_mod_DPeven(:,1) .* mod_mask;
+H(f1/10+1)= result.l_SF_modDPf1;
+result.H_mod_DPf1 = H(mod_f1);
+course = abs(ifft(H));
+result.modSF_DPf1_course = 20*log10(l * course(1:2/f_BT*fs));
+
+% time courses of f2-SFOAE produced during simulataneously presented primaries and biasing tone
+result.l_SF_modDPf2 = H_mod_DPodd(f2/10+1,1) - result.suppr_f2;
+mod_mask = zeros(l,1);
+mod_mask(mod_f2) = 1;
+
+result.H_modCM_DPf2 = H_mod_DPodd(mod_f2,2);
+course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
+result.modCM_DPf2_course = 20*log10(l * course(1:2/f_BT*fs));
+
+H = H_mod_DPodd(:,1) .* mod_mask;
+H(f2/10+1)= result.l_SF_modDPf2;
+result.H_mod_DPf2 = H(mod_f2);
+course = abs(ifft(H));
+result.modSF_DPf2_course = 20*log10(l * course(1:2/f_BT*fs));
+
+
+%% only f2 primary presented (modSF)
 modSF1_start = 59600 + latency;
 avg_wave = zeros(fs/10,2);
 for q = 0:7
@@ -189,51 +292,26 @@ end
 avg_wave = avg_wave/8;
 H_modSF_2=fft(circshift(avg_wave,circshift_amount))./H_mic;
 result.H_mod_SF = (H_modSF_1-H_modSF_2)/2;
-result.l_modSF = result.H_mod_SF(f2/10+1) - result.l2_suppr;
+result.l_modSF_f2 = result.H_mod_SF(f2/10+1) - result.suppr_f2;
 
-%% OAE suppression time courses
-mod_mask = zeros(l,1);
-mod_mask(mod_2f1_f2) = 1;
-result.H_mod_2f1_f2 = H_mod_DPodd(mod_2f1_f2,1);
-course = abs(ifft(H_mod_DPodd(:,1) .* mod_mask));
-result.mod_2f1_f2_course = 20*log10(l * course(1:2/f_BT*fs));
-
-mod_mask = zeros(l,1);
-mod_mask(mod_f2_f1) = 1;
-result.H_mod_f2_f1 = H_mod_DPodd(mod_f2_f1,1);
-course = abs(ifft(H_mod_DPodd(:,1) .* mod_mask));
-result.mod_f2_f1_course = 20*log10(l * course(1:2/f_BT*fs));
-
+% SFOAE time course
 mod_mask = zeros(l,1);
 mod_mask(mod_f2) = 1;
-H = result.H_mod_SF(:,1) .* mod_mask;
-H(f2/10+1)= result.l_modSF;
-result.H_mod_f2 = H(mod_f2);
-course = abs(ifft(H));
-result.modSF_f2 = 20*log10(l * course(1:2/f_BT*fs));
 
-%% CM suppression time courses
-mod_mask = zeros(l,1);
-mod_mask(mod_2f1_f2) = 1;
-result.H_modCM_2f1_f2 = H_mod_DPodd(mod_2f1_f2,2);
-course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
-result.modCM_2f1_f2_course = 20*log10(l * course(1:2/f_BT*fs));
-
-mod_mask = zeros(l,1);
-mod_mask(mod_f2_f1) = 1;
-result.H_modCM_f2_f1 = H_mod_DPodd(mod_f2_f1,2);
-course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
-result.modCM_f2_f1_course = 20*log10(l * course(1:2/f_BT*fs));
-
-mod_mask = zeros(l,1);
-mod_mask(mod_f2) = 1;
 result.H_modCM_f2 = result.H_mod_SF(mod_f2,2);
 course = abs(ifft(result.H_mod_SF(:,2) .* mod_mask));
 result.modCM_f2_course = 20*log10(l * course(1:2/f_BT*fs));
 
+H = result.H_mod_SF(:,1) .* mod_mask;
+H(f2/10+1)= result.l_modSF_f2;
+result.H_mod_f2 = H(mod_f2);
+course = abs(ifft(H));
+result.modSF_f2_course = 20*log10(l * course(1:2/f_BT*fs));
+
+
 %% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if ~plot_flag, return, end
-plot_prmSet(results, prmSet, result,scrsz(monitor,:))
+plot_prmSet(results, prmSet,result,scrsz(monitor,:))
 
 %plot time series of relevant spectral line levels
 figure(get_figure_h([scrsz(monitor,1)+round(scrsz(monitor,3)/4*3),scrsz(monitor,2)+90,...
@@ -247,7 +325,7 @@ if first==1
     series.H_modCM_f2_f1 =[];
     series.H_modCM_2f1_f2 = [];
     series.H_mod_f2 = [];
-    series.l_SF = [];
+    series.l_unmod_SF_f2 = [];
     series.H_modCM_f2 =[];
     series.l_unmodCM_f2 =[];
     series.CAP_ampl =[];
@@ -256,11 +334,11 @@ else
 end
 
 series.H_mod_2f1_f2 = [series.H_mod_2f1_f2 result.H_mod_2f1_f2];
+series.H_modCM_2f1_f2 = [series.H_modCM_2f1_f2 result.H_modCM_2f1_f2];
 series.H_mod_f2_f1 = [series.H_mod_f2_f1 result.H_mod_f2_f1];
 series.H_modCM_f2_f1 = [series.H_modCM_f2_f1 result.H_modCM_f2_f1];
-series.H_modCM_2f1_f2 = [series.H_modCM_2f1_f2 result.H_modCM_2f1_f2];
 series.H_mod_f2 = [series.H_mod_f2 result.H_mod_f2];
-series.l_SF = [series.l_SF result.l_SF];
+series.l_unmod_SF_f2 = [series.l_unmod_SF_f2 result.l_unmod_SF_f2];
 series.H_modCM_f2 = [series.H_modCM_f2 result.H_modCM_f2];
 series.l_unmodCM_f2 = [series.l_unmodCM_f2 result.l_unmodCM_f2];
 series.CAP_ampl = [series.CAP_ampl result.CAP_ampl];
