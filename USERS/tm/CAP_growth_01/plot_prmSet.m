@@ -30,13 +30,12 @@ hold on
 plot(linspace(0,2*1000/f_BT,2*8*CAP_dur),[result(number).modCAP; result(number).modCAP])
 
 CAP_ampl2 = 2*(result(number).CAP_ampl-mean(result(number).CAP_ampl));
-CAP_mod_curve = spline(5-80:10:75+80,[CAP_ampl2 CAP_ampl2 CAP_ampl2],linspace(0,80,8*CAP_dur));
 plot([5:10:160]*2*1000/f_BT/160,[CAP_ampl2 CAP_ampl2],'kx')
-plot(linspace(0,2*1000/f_BT,2*8*CAP_dur),[CAP_mod_curve CAP_mod_curve],'k-')
+plot(linspace(0,2*1000/f_BT,2*8*CAP_dur),[result(number).CAP_mod_course; result(number).CAP_mod_course],'k-')
 
 yLimit = get(gca,'YLim');
 course = mean(yLimit) + diff(yLimit)/2 * result(number).course_BT_CAP;
-plot(linspace(0,2*1000/f_BT,2*800), course,'k:'),
+plot(linspace(0,2*1000/f_BT,2*800), [course; course],'k:'),
 
 xlim([0 2/f_BT*1000]), grid on, zoom yon,
 [~,idx]=max(course(1:end/2));
@@ -48,27 +47,27 @@ title(['CAP modulation (prmSet:' num2str(prmSet) ') L_P=' num2str(l2) 'dB, L_B='
 figure(get_figure_h([scrsz(1),scrsz(2)+round(scrsz(4)*2/4)-18,round(scrsz(3)/3.6),...
     round(scrsz(4)/4-40)]));clf
 set(gcf,'Name',['modCM patterns' results.header.title ' #' num2str(number)])
-plot(x,result(number).modCM_2f1_f2_course,'b'),
+plot(x,repmat(result(number).modCM_2f1_f2_course,2,1),'b'),
 hold on;
 plot(x,20*log10(abs(result(number).l_unmodCM_2f1_f2)*ones(2/f_BT*fs,1)),'b--')
-plot(x,result(number).modCM_f2_f1_course,'r'),
+plot(x,repmat(result(number).modCM_f2_f1_course,2,1),'r'),
 plot(x,20*log10(abs(result(number).l_unmodCM_f2_f1)*ones(2/f_BT*fs,1)),'r--')
 % plot(x,(series(number).modCM_f2_course - 20*log10(abs(series(number).l_unmodCM_f2))),'k'), % shift to zero
 % plot(x,zeros(2/f_BT*fs,1),'k--')
-plot(x,result(number).modCM_2f2_f1_course,'y'),
+plot(x,repmat(result(number).modCM_2f2_f1_course,2,1),'y'),
 plot(x,20*log10(abs(result(number).l_unmodCM_2f2_f1)*ones(2/f_BT*fs,1)),'y--')
-plot(x,result(number).modCM_DPf1_course,'Color',[0 .9 0]),
+plot(x,repmat(result(number).modCM_DPf1_course,2,1),'Color',[0 .9 0]),
 plot(x,20*log10(abs(result(number).l_unmodCM_DPf1)*ones(2/f_BT*fs,1)),'g--','Color',[0 .9 0])
-plot(x,result(number).modCM_DPf2_course,'w'),
+plot(x,repmat(result(number).modCM_DPf2_course,2,1),'w'),
 plot(x,20*log10(abs(result(number).l_unmodCM_DPf2)*ones(2/f_BT*fs,1)),'w--')
-plot(x,result(number).modCM_2f1_course,'m')
+plot(x,repmat(result(number).modCM_2f1_course,2,1),'m')
 plot(x,20*log10(abs(result(number).l_unmodCM_2f1)*ones(2/f_BT*fs,1)),'m--')
-plot(x,result(number).modCM_f2_course,'k'),
+plot(x,repmat(result(number).modCM_f2_course,2,1),'k'),
 plot(x,20*log10(abs(result(number).l_unmodCM_f2)*ones(2/f_BT*fs,1)),'k--')
 
 yLimit = get(gca,'YLim');
 course = mean(yLimit) + diff(yLimit)/2 * result(number).course_BT;
-plot(x, course,'k:'),
+plot(x, [course; course],'k:'),
 xlim([0 2/f_BT*1000]), grid on, zoom yon,
 [~,idx]=max(course(1:end/2));
 set(gca,'XTick',idx*100/3/1600+ [0 .25 .5 .75 1 ]/f_BT*1000,'FontSize',7)
@@ -80,22 +79,22 @@ title(['CM modulation (prmSet:' num2str(prmSet) ') L_P=' num2str(l2) 'dB, L_B=' 
 figure(get_figure_h([scrsz(1),scrsz(2)+round(scrsz(4)*3/4)-18,...
     round(scrsz(3)/3.6),round(scrsz(4)/4-40)]));clf
 set(gcf,'Name',['modOAE patterns' results.header.title ' #' num2str(number)])
-plot(x,result(number).mod_2f1_f2_course,'b'),
+plot(x,repmat(result(number).mod_2f1_f2_course,2,1),'b'),
 hold on;
 plot(x,20*log10(abs(result(number).l_unmod_2f1_f2)*ones(2/f_BT*fs,1)),'b--')
-plot(x,result(number).mod_f2_f1_course,'r'),
+plot(x,repmat(result(number).mod_f2_f1_course,2,1),'r'),
 plot(x,20*log10(abs(result(number).l_unmod_f2_f1)*ones(2/f_BT*fs,1)),'r--')
-plot(x,result(number).mod_2f2_f1_course,'y'),
+plot(x,repmat(result(number).mod_2f2_f1_course,2,1),'y'),
 plot(x,20*log10(abs(result(number).l_unmod_2f2_f1)*ones(2/f_BT*fs,1)),'y--')
-plot(x,result(number).modSF_DPf1_course,'Color',[0 .9 0]),
+plot(x,repmat(result(number).modSF_DPf1_course,2,1),'Color',[0 .9 0]),
 plot(x,20*log10(abs(result(number).l_unmod_SF_DPf1)*ones(2/f_BT*fs,1)),'g--','Color',[0 .9 0])
-plot(x,result(number).modSF_DPf2_course,'w'),
+plot(x,repmat(result(number).modSF_DPf2_course,2,1),'w'),
 plot(x,20*log10(abs(result(number).l_unmod_SF_DPf2)*ones(2/f_BT*fs,1)),'w--')
-plot(x,result(number).modSF_f2_course,'k'),
+plot(x,repmat(result(number).modSF_f2_course,2,1),'k'),
 plot(x,20*log10(abs(result(number).l_unmod_SF_f2)*ones(2/f_BT*fs,1)),'k--')
 yLimit = get(gca,'YLim');
 course = mean(yLimit) + diff(yLimit)/2 * result(number).course_BT;
-plot(x, course,'k:'),
+plot(x, [course; course],'k:'),
 xlim([0 2/f_BT*1000]), grid on, zoom yon,
 [~,idx]=max(course(1:end/2));
 set(gca,'XTick',idx*100/3/1600+ [0 .25 .5 .75 1 ]/f_BT*1000,'FontSize',7)

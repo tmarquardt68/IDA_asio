@@ -78,7 +78,8 @@ uicontrol('Parent',h_fig, ...
 	'Style','pushbutton', ...
 	'Tag','pushbutton_plot_prmSet', ...
 	'UIContextMenu',[]);
-plot_time_series_spectral_lines(series)
+plot_time_series_modulation(results.data.presentation)
+% plot_time_series_spectral_lines(series)
 %==========================================================================
 
 function plot_time_series_spectral_lines_of_prmSet_averages(results,scrsz)
@@ -143,7 +144,8 @@ uicontrol('Parent',h_fig, ...
 	'Style','pushbutton', ...
 	'Tag','pushbutton_plot_prmSet', ...
 	'UIContextMenu',[]);
-plot_time_series_spectral_lines(series)
+plot_time_series_modulation(avg)
+% plot_time_series_spectral_lines(series)
 %==========================================================================
 
 function CB_plot_prmSet(callingObj,~)

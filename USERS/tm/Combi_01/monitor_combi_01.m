@@ -91,6 +91,10 @@ for q =8:-1:1
 end
 result.CAP_ampl = CAP_ampl;
 
+CAP_ampl2 = 2*(CAP_ampl-mean(CAP_ampl));
+result.CAP_mod_course = spline(5-80:10:75+80,[CAP_ampl2 CAP_ampl2 CAP_ampl2],linspace(0,80,8*CAP_dur))';
+
+
 % get time course of BT related to modCAP
 for q=8:-1:1
     BT_ampl(:,q) = ...
@@ -105,7 +109,7 @@ tmp = fft(mean(BT_ampl));
 % (CAPwindowStart_latency) is at f2 onset and also aligned with CAP peak
 H_f_BT(f_BT/10+1) = tmp(2)*exp(-1i*0.125e-3*f_BT*2*pi); 
 course = real(ifft(H_f_BT));
-result.course_BT_CAP = course(1:2*fs/f_BT)/max(course);
+result.course_BT_CAP = course(1:fs/f_BT)/max(course);
 
 
 %% get delay to display BT phase aligned with that of CAP
@@ -119,7 +123,6 @@ H = fft(avg_wave)./H_mic(:,1);
 H_f_BT = zeros(l,1);
 H_f_BT(f_BT/10+1) = H(f_BT/10+1);
 course = real(ifft(H_f_BT));
-result.course_BT = course(1:2/f_BT*fs)/max(course);
 
 [~,idx_BT]=max(course(1:fs/f_BT));
 [~,idx_BT_CAP]=max(result.course_BT_CAP(1:fs/f_BT));
@@ -194,7 +197,7 @@ result.l_BT_ec = result.H_modDP_2(f_BT/10+1);
 H_f_BT = zeros(l,1);
 H_f_BT(f_BT/10+1) = result.l_BT_ec;
 course = real(ifft(H_f_BT));
-result.course_BT = course(1:2/f_BT*fs)/max(course);
+result.course_BT = course(1:fs/f_BT)/max(course);
 
 % 2f1-f2 suppression time courses
 mod_mask = zeros(l,1);
@@ -202,11 +205,11 @@ mod_mask(mod_2f1_f2) = 1;
 
 result.H_mod_2f1_f2 = H_mod_DPodd(mod_2f1_f2,1);
 course = abs(ifft(H_mod_DPodd(:,1) .* mod_mask));
-result.mod_2f1_f2_course = 20*log10(l * course(1:2/f_BT*fs));
+result.mod_2f1_f2_course = 20*log10(l * course(1:fs/f_BT));
 
 result.H_modCM_2f1_f2 = H_mod_DPodd(mod_2f1_f2,2);
 course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
-result.modCM_2f1_f2_course = 20*log10(l * course(1:2/f_BT*fs));
+result.modCM_2f1_f2_course = 20*log10(l * course(1:fs/f_BT));
 
 % f2-f1 suppression time courses
 mod_mask = zeros(l,1);
@@ -214,11 +217,11 @@ mod_mask(mod_f2_f1) = 1;
 
 result.H_mod_f2_f1 = H_mod_DPodd(mod_f2_f1,1);
 course = abs(ifft(H_mod_DPodd(:,1) .* mod_mask));
-result.mod_f2_f1_course = 20*log10(l * course(1:2/f_BT*fs));
+result.mod_f2_f1_course = 20*log10(l * course(1:fs/f_BT));
 
 result.H_modCM_f2_f1 = H_mod_DPodd(mod_f2_f1,2);
 course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
-result.modCM_f2_f1_course = 20*log10(l * course(1:2/f_BT*fs));
+result.modCM_f2_f1_course = 20*log10(l * course(1:fs/f_BT));
 
 % 2f2-f1 suppression time courses
 mod_mask = zeros(l,1);
@@ -226,11 +229,11 @@ mod_mask(mod_2f2_f1) = 1;
 
 result.H_modCM_2f2_f1 = H_mod_DPeven(mod_2f2_f1,2);
 course = abs(ifft(H_mod_DPeven(:,2) .* mod_mask));
-result.modCM_2f2_f1_course = 20*log10(l * course(1:2/f_BT*fs));
+result.modCM_2f2_f1_course = 20*log10(l * course(1:fs/f_BT));
 
 result.H_mod_2f2_f1 = H_mod_DPeven(mod_2f2_f1,1);
 course = abs(ifft(H_mod_DPeven(:,1) .* mod_mask));
-result.mod_2f2_f1_course = 20*log10(l * course(1:2/f_BT*fs));
+result.mod_2f2_f1_course = 20*log10(l * course(1:fs/f_BT));
 
 % 2f1 suppression time courses
 mod_mask = zeros(l,1);
@@ -238,11 +241,11 @@ mod_mask(mod_2f1) = 1;
 
 result.H_modCM_2f1 = H_mod_DPeven(mod_2f1,2);
 course = abs(ifft(H_mod_DPeven(:,2) .* mod_mask));
-result.modCM_2f1_course = 20*log10(l * course(1:2/f_BT*fs));
+result.modCM_2f1_course = 20*log10(l * course(1:fs/f_BT));
 
 result.H_mod_2f1 = H_mod_DPeven(mod_2f1,1);
 course = abs(ifft(H_mod_DPeven(:,1) .* mod_mask));
-result.mod_2f1_course = 20*log10(l * course(1:2/f_BT*fs));
+result.mod_2f1_course = 20*log10(l * course(1:fs/f_BT));
 
 % time courses of f1-SFOAE produced during simulataneously presented primaries and biasing tone
 result.l_SF_modDPf1 = H_mod_DPeven(f1/10+1,1) - result.suppr_f1;
@@ -251,13 +254,13 @@ mod_mask(mod_f1) = 1;
 
 result.H_modCM_DPf1 = H_mod_DPeven(mod_f1,2);
 course = abs(ifft(H_mod_DPeven(:,2) .* mod_mask));
-result.modCM_DPf1_course = 20*log10(l * course(1:2/f_BT*fs));
+result.modCM_DPf1_course = 20*log10(l * course(1:fs/f_BT));
 
 H = H_mod_DPeven(:,1) .* mod_mask;
 H(f1/10+1)= result.l_SF_modDPf1;
 result.H_mod_DPf1 = H(mod_f1);
 course = abs(ifft(H));
-result.modSF_DPf1_course = 20*log10(l * course(1:2/f_BT*fs));
+result.modSF_DPf1_course = 20*log10(l * course(1:fs/f_BT));
 
 % time courses of f2-SFOAE produced during simulataneously presented primaries and biasing tone
 result.l_SF_modDPf2 = H_mod_DPodd(f2/10+1,1) - result.suppr_f2;
@@ -266,13 +269,13 @@ mod_mask(mod_f2) = 1;
 
 result.H_modCM_DPf2 = H_mod_DPodd(mod_f2,2);
 course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
-result.modCM_DPf2_course = 20*log10(l * course(1:2/f_BT*fs));
+result.modCM_DPf2_course = 20*log10(l * course(1:fs/f_BT));
 
 H = H_mod_DPodd(:,1) .* mod_mask;
 H(f2/10+1)= result.l_SF_modDPf2;
 result.H_mod_DPf2 = H(mod_f2);
 course = abs(ifft(H));
-result.modSF_DPf2_course = 20*log10(l * course(1:2/f_BT*fs));
+result.modSF_DPf2_course = 20*log10(l * course(1:fs/f_BT));
 
 
 %% only f2 primary presented (modSF)
@@ -300,13 +303,13 @@ mod_mask(mod_f2) = 1;
 
 result.H_modCM_f2 = result.H_mod_SF(mod_f2,2);
 course = abs(ifft(result.H_mod_SF(:,2) .* mod_mask));
-result.modCM_f2_course = 20*log10(l * course(1:2/f_BT*fs));
+result.modCM_f2_course = 20*log10(l * course(1:fs/f_BT));
 
 H = result.H_mod_SF(:,1) .* mod_mask;
 H(f2/10+1)= result.l_modSF_f2;
 result.H_mod_f2 = H(mod_f2);
 course = abs(ifft(H));
-result.modSF_f2_course = 20*log10(l * course(1:2/f_BT*fs));
+result.modSF_f2_course = 20*log10(l * course(1:fs/f_BT));
 
 
 %% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
