@@ -36,7 +36,7 @@ plot(20*log10(abs(series.H_mod_f2(2,:))),'kx-')
 plot(20*log10(abs(series.H_mod_f2(3,:))),'k-','LineWidth',2),
 plot(20*log10(abs(series.H_mod_f2(4,:))),'kx-')
 plot(20*log10(abs(series.H_mod_f2(5,:))),'ko:')
-plot(20*log10(abs(series.l_unmod_SF_f2)),'m+','LineWidth',2),
+plot(20*log10(abs(series.l_unmod_SF_f2)),'c.','LineWidth',2),
 grid on,title modSF,set(gca,'FontSize',7); a=a+1;
 
 % Plot modCM_f2 level
@@ -46,7 +46,7 @@ plot(20*log10(abs(series.H_modCM_f2(2,:))),'kx-')
 plot(20*log10(abs(series.H_modCM_f2(3,:))),'kx-','LineWidth',2),
 plot(20*log10(abs(series.H_modCM_f2(4,:))),'kx-')
 plot(20*log10(abs(series.H_modCM_f2(5,:))),'ko:')
-plot(20*log10(abs(series.l_unmodCM_f2)),'m+','LineWidth',2),
+plot(20*log10(abs(series.l_unmodCM_f2)),'c.','LineWidth',2),
 grid on,title modCMf2,set(gca,'FontSize',7); a=a+1;
 
 % Plot CAPs
@@ -58,5 +58,6 @@ grid on,title CAPs,set(gca,'FontSize',7)
 
 xlabel('no of 6s-presentions'),zoom on
 linkaxes(h_ax, 'x')
-xlim(h_ax(1),[1 len_series])
+set(h_ax,'Color',[.8 .8 .8])
+xlim(h_ax(1),[0 len_series])
 zoom on
