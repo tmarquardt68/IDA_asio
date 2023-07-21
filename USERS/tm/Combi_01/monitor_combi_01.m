@@ -14,7 +14,14 @@ end
 latency = 4500;
 fs = results.stimulus.sample_rate;
 H_mic = results.H_mic;
-H_mic = [H_mic(1:end/2,1) ones(fs/10,1)];
+% H_mic = [H_mic(1:fs/10,1) ones(fs/10,1)];  !!! uncomment with proper
+% calibration (first when statred with GP experiments in April 2023)
+% H_mic = ones(fs/10,2);
+if length(H_mic)==fs/10
+    H_mic = [H_mic ones(fs/10,1)];
+else
+    H_mic = [H_mic(1:2:end,1) ones(fs/10,1)];
+end
 f_BT = results.stimulus.original_parameter_table(prmSet,2);
 f1 = results.stimulus.original_parameter_table(prmSet,3);
 f2 = results.stimulus.original_parameter_table(prmSet,4);
@@ -89,11 +96,7 @@ for q =8:-1:1
     CAP_ampl(q) = max(result.modCAP((q-1)*CAP_dur+1:q*CAP_dur)) - ...
         min(result.modCAP((q-1)*CAP_dur+1:q*CAP_dur));
 end
-result.CAP_ampl = CAP_ampl;
-
-CAP_ampl2 = 2*(CAP_ampl-mean(CAP_ampl));
-result.CAP_mod_course = spline(5-80:10:75+80,[CAP_ampl2 CAP_ampl2 CAP_ampl2],linspace(0,80,8*CAP_dur))';
-
+result.CAP_ampl = CAP_ampl';
 
 % get time course of BT related to modCAP
 for q=8:-1:1
@@ -111,72 +114,48 @@ H_f_BT(f_BT/10+1) = tmp(2)*exp(-1i*0.125e-3*f_BT*2*pi);
 course = real(ifft(H_f_BT));
 result.course_BT_CAP = course(1:fs/f_BT)/max(course);
 
-
-%% get delay to display BT phase aligned with that of CAP
-modDP2_start = 81200 + latency;
-avg_wave = zeros(fs/10,1);
-for q = 0:7
-    avg_wave = avg_wave + wave(q*6*fs/10+modDP2_start+1 : (q*6+1)*fs/10+modDP2_start,1);
-end
-avg_wave = avg_wave/8;
-H = fft(avg_wave)./H_mic(:,1);
-H_f_BT = zeros(l,1);
-H_f_BT(f_BT/10+1) = H(f_BT/10+1);
-course = real(ifft(H_f_BT));
-
-[~,idx_BT]=max(course(1:fs/f_BT));
-[~,idx_BT_CAP]=max(result.course_BT_CAP(1:fs/f_BT));
-circshift_amount = 0;%idx_BT_CAP-idx_BT
-
-% [idx_BT_CAP  idx_BT idx_BT_CAP-idx_BT]
-% hold off
-% plot(result.course_BT_CAP(1:fs/f_BT))
-% hold on
-% plot(course(1:fs/f_BT)/max(course))
-% pause(.1)
-
 %% biasing tone OFF %%
 % get pure speaker primaries in ear canal during SFOAE suppression
 if rem(f2,20)~=0  % f1 is multiple of 20
     avg_wave = (wave(16400 + latency+1 : fs/10 + 16400 + latency,:) ...
         - wave(23600 + latency+1 : fs/10 + 23600 + latency,:))/2;
-    H_wave_suppr2 = fft(circshift(avg_wave,circshift_amount));
-    result.suppr_f2 = H_wave_suppr2(f2/10+1,1)./H_mic(f2/10+1);
+    H_wave_suppr2 = fft(avg_wave)./H_mic;
+    result.suppr_f2 = H_wave_suppr2(f2/10+1,1);
     result.supprCM_f2 = H_wave_suppr2(f2/10+1,2);
 
     avg_wave =  wave(45200 + latency+1 : fs/10 + 45200 + latency,:);
-    H_wave_suppr1 = fft(circshift(avg_wave,circshift_amount));
-    result.suppr_f1 = H_wave_suppr1(f1/10+1,1)./H_mic(f1/10+1);
+    H_wave_suppr1 = fft(avg_wave)./H_mic;
+    result.suppr_f1 = H_wave_suppr1(f1/10+1,1);
     result.supprCM_f1 = H_wave_suppr1(f1/10+1,2);
     result.supprCM_2f1 = H_wave_suppr1(f1/10+1,2);
 
     % get unmodulated SF0AE level
     avg_wave = (wave(2000 + latency+1 : fs/10 + 2000 + latency,:) ...
         - wave(9200 + latency+1 : fs/10 + 9200 + latency,:))/2;
-    H_wave_SF = fft(circshift(avg_wave,circshift_amount));
-    result.l_unmod_SF_f2 = H_wave_SF(f2/10+1,1)./H_mic(f2/10+1)-result.suppr_f2;
+    H_wave_SF = fft(avg_wave)./H_mic;
+    result.l_unmod_SF_f2 = H_wave_SF(f2/10+1,1)-result.suppr_f2;
     result.l_unmodCM_f2 = H_wave_SF(f2/10+1,2);
 
     % get unmodulated DPOAE and SF0AE at DP primaries
     avg_wave = (wave(30800 + latency+1 : fs/10 + 30800 + latency,:) ...
         - wave(38000 + latency+1 : fs/10 + 38000 + latency,:))/2;
-    H_wave_unmod_DPodd = fft(circshift(avg_wave,circshift_amount));
+    H_wave_unmod_DPodd = fft(avg_wave)./H_mic;
 
     avg_wave = (wave(30800 + latency+1 : fs/10 + 30800 + latency,:) ...
         + wave(38000 + latency+1 : fs/10 + 38000 + latency,:))/2;
-    H_wave_unmod_DPeven = fft(circshift(avg_wave,circshift_amount));
+    H_wave_unmod_DPeven = fft(avg_wave)./H_mic;
 
-    result.l_unmod_2f1_f2 = H_wave_unmod_DPodd((2*f1-f2)/10+1,1)./H_mic((2*f1-f2)/10+1);
+    result.l_unmod_2f1_f2 = H_wave_unmod_DPodd((2*f1-f2)/10+1,1);
     result.l_unmodCM_2f1_f2 = H_wave_unmod_DPodd((2*f1-f2)/10+1,2);
-    result.l_unmod_f2_f1 = H_wave_unmod_DPodd((f2-f1)/10+1,1)./H_mic((f2-f1)/10+1);
+    result.l_unmod_f2_f1 = H_wave_unmod_DPodd((f2-f1)/10+1,1);
     result.l_unmodCM_f2_f1 = H_wave_unmod_DPodd((f2-f1)/10+1,2);
-    result.l_unmod_2f2_f1 = H_wave_unmod_DPeven((2*f2-f1)/10+1,1)./H_mic((2*f2-f1)/10+1);
-    result.l_unmodCM_2f2_f1 = H_wave_unmod_DPeven((2*f2-f1)/10+1,1)./H_mic((2*f2-f1)/10+1);
-    result.l_unmod_SF_DPf1 = H_wave_unmod_DPeven(f1/10+1,1)./H_mic(f1/10+1)-result.suppr_f1;
+    result.l_unmod_2f2_f1 = H_wave_unmod_DPeven((2*f2-f1)/10+1,1);
+    result.l_unmodCM_2f2_f1 = H_wave_unmod_DPeven((2*f2-f1)/10+1,1);
+    result.l_unmod_SF_DPf1 = H_wave_unmod_DPeven(f1/10+1,1)-result.suppr_f1;
     result.l_unmodCM_DPf1 = H_wave_unmod_DPeven(f1/10+1,2);
-    result.l_unmod_SF_DPf2 = H_wave_unmod_DPodd(f2/10+1,1)./H_mic(f2/10+1)-result.suppr_f2;
+    result.l_unmod_SF_DPf2 = H_wave_unmod_DPodd(f2/10+1,1)-result.suppr_f2;
     result.l_unmodCM_DPf2 = H_wave_unmod_DPodd(f2/10+1,2);
-    result.l_unmod_2f1 = H_wave_unmod_DPeven(2*f1/10+1,1)./H_mic((2*f1)/10+1);
+    result.l_unmod_2f1 = H_wave_unmod_DPeven(2*f1/10+1,1);
     result.l_unmodCM_2f1 = H_wave_unmod_DPeven(2*f1/10+1,2);
 
     %% biasing tone ON %%
@@ -187,7 +166,7 @@ if rem(f2,20)~=0  % f1 is multiple of 20
         avg_wave = avg_wave + wave(q*6*fs/10+modDP1_start+1 : (q*6+1)*fs/10+modDP1_start,:);
     end
     avg_wave = avg_wave/8;
-    result.H_modDP_1=fft(circshift(avg_wave,circshift_amount))./H_mic;
+    result.H_modDP_1=fft(avg_wave)./H_mic;
 
     modDP2_start = 81200 + latency;
     avg_wave = zeros(fs/10,2);
@@ -195,7 +174,7 @@ if rem(f2,20)~=0  % f1 is multiple of 20
         avg_wave = avg_wave + wave(q*6*fs/10+modDP2_start+1 : (q*6+1)*fs/10+modDP2_start,:);
     end
     avg_wave = avg_wave/8;
-    result.H_modDP_2=fft(circshift(avg_wave,circshift_amount))./H_mic;
+    result.H_modDP_2=fft(avg_wave)./H_mic;
 
     H_mod_DPodd = (result.H_modDP_1-result.H_modDP_2)/2;
     H_mod_DPeven = (result.H_modDP_1+result.H_modDP_2)/2;
@@ -293,7 +272,7 @@ if rem(f2,20)~=0  % f1 is multiple of 20
         avg_wave = avg_wave + wave(q*6*fs/10+modSF1_start+1 : (q*6+1)*fs/10+modSF1_start,:);
     end
     avg_wave = avg_wave/8;
-    H_modSF_1=fft(circshift(avg_wave,circshift_amount))./H_mic;
+    H_modSF_1=fft(avg_wave)./H_mic;
 
     modSF2_start = 66800 + latency;
     avg_wave = zeros(fs/10,2);
@@ -301,7 +280,7 @@ if rem(f2,20)~=0  % f1 is multiple of 20
         avg_wave = avg_wave + wave(q*6*fs/10+modSF2_start+1 : (q*6+1)*fs/10+modSF2_start,:);
     end
     avg_wave = avg_wave/8;
-    H_modSF_2=fft(circshift(avg_wave,circshift_amount))./H_mic;
+    H_modSF_2=fft(avg_wave)./H_mic;
     result.H_mod_SF = (H_modSF_1-H_modSF_2)/2;
     result.l_modSF_f2 = result.H_mod_SF(f2/10+1) - result.suppr_f2;
 
@@ -322,42 +301,43 @@ if rem(f2,20)~=0  % f1 is multiple of 20
 else % f2 is multiple of 20
     avg_wave = (wave(16400 + latency+1 : fs/10 + 16400 + latency,:) ...
         + wave(23600 + latency+1 : fs/10 + 23600 + latency,:))/2;
-    H_wave_suppr2 = fft(circshift(avg_wave,circshift_amount));
-    result.suppr_f2 = H_wave_suppr2(f2/10+1,1)./H_mic(f2/10+1);
+    H_wave_suppr2 = fft(avg_wave)./H_mic;
+    result.suppr_f2 = H_wave_suppr2(f2/10+1,1);
     result.supprCM_f2 = H_wave_suppr2(f2/10+1,2);
 
     avg_wave =  wave(45200 + latency+1 : fs/10 + 45200 + latency,:);
-    H_wave_suppr1 = fft(circshift(avg_wave,circshift_amount));
-    result.suppr_f1 = H_wave_suppr1(f1/10+1,1)./H_mic(f1/10+1);
+    H_wave_suppr1 = fft(avg_wave)./H_mic;
+    result.suppr_f1 = H_wave_suppr1(f1/10+1,1);
     result.supprCM_f1 = H_wave_suppr1(f1/10+1,2);
     result.supprCM_2f1 = H_wave_suppr1(f1/10+1,2);
 
     % get unmodulated SF0AE level
     avg_wave = (wave(2000 + latency+1 : fs/10 + 2000 + latency,:) ...
         + wave(9200 + latency+1 : fs/10 + 9200 + latency,:))/2;
-    H_wave_SF = fft(circshift(avg_wave,circshift_amount));
-    result.l_unmod_SF_f2 = H_wave_SF(f2/10+1,1)./H_mic(f2/10+1)-result.suppr_f2;
+    H_wave_SF = fft(avg_wave)./H_mic;
+    result.l_unmod_SF_f2 = H_wave_SF(f2/10+1,1);
     result.l_unmodCM_f2 = H_wave_SF(f2/10+1,2);
 
     % get unmodulated DPOAE and SF0AE at DP primaries
     avg_wave = (wave(30800 + latency+1 : fs/10 + 30800 + latency,:) ...
         - wave(38000 + latency+1 : fs/10 + 38000 + latency,:))/2;
-    H_wave_unmod_DPodd = fft(circshift(avg_wave,circshift_amount));
+    H_wave_unmod_DPodd = fft(avg_wave)./H_mic;
 
     avg_wave = (wave(30800 + latency+1 : fs/10 + 30800 + latency,:) ...
         + wave(38000 + latency+1 : fs/10 + 38000 + latency,:))/2;
-    H_wave_unmod_DPeven = fft(circshift(avg_wave,circshift_amount));
+    H_wave_unmod_DPeven = fft(avg_wave)./H_mic;
 
-    result.l_unmod_2f1_f2 = H_wave_unmod_DPodd((2*f1-f2)/10+1,1)./H_mic((2*f1-f2)/10+1);
+    result.l_unmod_2f1_f2 = H_wave_unmod_DPodd((2*f1-f2)/10+1,1);
     result.l_unmodCM_2f1_f2 = H_wave_unmod_DPodd((2*f1-f2)/10+1,2);
-    result.l_unmod_f2_f1 = H_wave_unmod_DPodd((f2-f1)/10+1,1)./H_mic((f2-f1)/10+1);
+    result.l_unmod_f2_f1 = H_wave_unmod_DPodd((f2-f1)/10+1,1);
     result.l_unmodCM_f2_f1 = H_wave_unmod_DPodd((f2-f1)/10+1,2);
-    result.l_unmod_2f2_f1 = H_wave_unmod_DPodd((2*f2-f1)/10+1,1)./H_mic((2*f2-f1)/10+1);
-    result.l_unmodCM_2f2_f1 = H_wave_unmod_DPodd((2*f2-f1)/10+1,1)./H_mic((2*f2-f1)/10+1);
-    result.l_unmod_SF_DPf1 = H_wave_unmod_DPodd(f1/10+1,1)./H_mic(f1/10+1)-result.suppr_f1;
+    result.l_unmod_2f2_f1 = H_wave_unmod_DPodd((2*f2-f1)/10+1,1);
+    result.l_unmodCM_2f2_f1 = H_wave_unmod_DPodd((2*f2-f1)/10+1,2);
+    result.l_unmod_SF_DPf1 = H_wave_unmod_DPodd(f1/10+1,1);
     result.l_unmodCM_DPf1 = H_wave_unmod_DPodd(f1/10+1,2);
-    result.l_unmod_SF_DPf2 = H_wave_unmod_DPeven(f2/10+1,1)./H_mic(f2/10+1)-result.suppr_f2;
+    result.l_unmod_SF_DPf2 = H_wave_unmod_DPeven(f2/10+1,1);
     result.l_unmodCM_DPf2 = H_wave_unmod_DPeven(f2/10+1,2);
+    result.l_unmod_2f1 = H_wave_unmod_DPeven(2*f1/10+1,1);
     result.l_unmodCM_2f1 = H_wave_unmod_DPeven(2*f1/10+1,2);
 
     %% biasing tone ON %%
@@ -368,7 +348,7 @@ else % f2 is multiple of 20
         avg_wave = avg_wave + wave(q*6*fs/10+modDP1_start+1 : (q*6+1)*fs/10+modDP1_start,:);
     end
     avg_wave = avg_wave/8;
-    result.H_modDP_1=fft(circshift(avg_wave,circshift_amount))./H_mic;
+    result.H_modDP_1=fft(avg_wave)./H_mic;
 
     modDP2_start = 81200 + latency;
     avg_wave = zeros(fs/10,2);
@@ -376,7 +356,7 @@ else % f2 is multiple of 20
         avg_wave = avg_wave + wave(q*6*fs/10+modDP2_start+1 : (q*6+1)*fs/10+modDP2_start,:);
     end
     avg_wave = avg_wave/8;
-    result.H_modDP_2=fft(circshift(avg_wave,circshift_amount))./H_mic;
+    result.H_modDP_2=fft(avg_wave)./H_mic;
 
     H_mod_DPodd = (result.H_modDP_1-result.H_modDP_2)/2;
     H_mod_DPeven = (result.H_modDP_1+result.H_modDP_2)/2;
@@ -474,7 +454,7 @@ else % f2 is multiple of 20
         avg_wave = avg_wave + wave(q*6*fs/10+modSF1_start+1 : (q*6+1)*fs/10+modSF1_start,:);
     end
     avg_wave = avg_wave/8;
-    H_modSF_1=fft(circshift(avg_wave,circshift_amount))./H_mic;
+    H_modSF_1=fft(avg_wave)./H_mic;
 
     modSF2_start = 66800 + latency;
     avg_wave = zeros(fs/10,2);
@@ -482,7 +462,7 @@ else % f2 is multiple of 20
         avg_wave = avg_wave + wave(q*6*fs/10+modSF2_start+1 : (q*6+1)*fs/10+modSF2_start,:);
     end
     avg_wave = avg_wave/8;
-    H_modSF_2=fft(circshift(avg_wave,circshift_amount))./H_mic;
+    H_modSF_2=fft(avg_wave)./H_mic;
     result.H_mod_SF = (H_modSF_1+H_modSF_2)/2;
     result.l_modSF_f2 = result.H_mod_SF(f2/10+1) - result.suppr_f2;
 

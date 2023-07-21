@@ -64,24 +64,25 @@ h_fig.CloseRequestFcn  = 'ida CloseRequestFcn';
 
 files = my_dir(data_path,'mat');
 [n,~] = size(files);
-last_file = deblank(files(n,:)); %% ignore animalID 'test'!
-tmp = strsplit(last_file,'-');
-while (strcmp(tmp{2},'test')||strcmp(tmp{2},'tst')) && n>0
-    n=n-1;
-    if n>0
-        last_file = deblank(files(n,:));
-    end
-    tmp = strsplit(last_file,'-');
-end
-
 if n==0
     animal_notes='';
-    userID=''; 
     animalID='';
     track_no=0;
     pos_no=0;
     last_file='';
+    callingObj.Parent=h_fig;
+    CB_change_user(callingObj)
+    userID = getappdata(h_fig,'userID');
 else
+    last_file = deblank(files(n,:)); %% ignore animalID 'test'!
+    tmp = strsplit(last_file,'-');
+    while (strcmp(tmp{2},'test')||strcmp(tmp{2},'tst')) && n>0
+        n=n-1;
+        if n>0
+            last_file = deblank(files(n,:));
+        end
+        tmp = strsplit(last_file,'-');
+    end    
     load([data_path, last_file],'results')
     header=results.header;
     userID=header.experimenter;

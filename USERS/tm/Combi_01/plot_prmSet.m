@@ -28,7 +28,8 @@ plot(linspace(0,2*1000/f_BT,2*8*CAP_dur),[result(number).modCAP; result(number).
 
 CAP_ampl2 = 2*(result(number).CAP_ampl-mean(result(number).CAP_ampl));
 plot([5:10:160]*2*1000/f_BT/160,[CAP_ampl2 CAP_ampl2],'kx')
-plot(linspace(0,2*1000/f_BT,2*8*CAP_dur),[result(number).CAP_mod_course; result(number).CAP_mod_course],'k-')
+CAP_mod_course = spline(5-80:10:75+80,[CAP_ampl2 CAP_ampl2 CAP_ampl2],linspace(0,80,8*CAP_dur))';
+plot(linspace(0,2*1000/f_BT,2*8*CAP_dur),[CAP_mod_course; CAP_mod_course],'k-')
 
 yLimit = get(gca,'YLim');
 course = mean(yLimit) + diff(yLimit)/2 * result(number).course_BT_CAP;
@@ -40,30 +41,33 @@ set(gca,'XTick',idx*100/3/1600+ [0 .25 .5 .75 1 ]/f_BT*1000,'FontSize',7)
 set(gca,'XTickLabel',{'0' '.25' '.5' '.75' '1' '1.25' '1.5' '1.75' '2'})
 title(['CAP modulation (prmSet:' num2str(prmSet) ') L_P=' num2str(l2) 'dB L_B=' num2str(l_BT) 'dB # ' num2str(number)])
 
+% get delay to display BT phase aligned with that of CAP
+[~,idx_BT]=max(result(number).course_BT(1:fs/f_BT));
+[~,idx_BT_CAP]=max(result(number).course_BT_CAP(1:fs/f_BT));
+circshift_amount = idx_BT_CAP - idx_BT;
+
 % plot CM modulation patterns
 figure(get_figure_h([scrsz(1),scrsz(2)+round(scrsz(4)*2/4)-18,round(scrsz(3)/6),...
     round(scrsz(4)/4-40)]));clf
 set(gcf,'Name',['modCM patterns' results.header.title ' #' num2str(number)])
-plot(x,repmat(result(number).modCM_2f1_f2_course,2,1),'b'),
+plot(x,repmat(circshift(result(number).modCM_2f1_f2_course,circshift_amount),2,1),'b')
 hold on;
 plot(x,20*log10(abs(result(number).l_unmodCM_2f1_f2)*ones(2/f_BT*fs,1)),'b--')
-plot(x,repmat(result(number).modCM_f2_f1_course,2,1),'r'),
+plot(x,repmat(circshift(result(number).modCM_f2_f1_course,circshift_amount),2,1),'r')
 plot(x,20*log10(abs(result(number).l_unmodCM_f2_f1)*ones(2/f_BT*fs,1)),'r--')
-% plot(x,(series(number).modCM_f2_course - 20*log10(abs(series(number).l_unmodCM_f2))),'k'), % shift to zero
-% plot(x,zeros(2/f_BT*fs,1),'k--')
-plot(x,repmat(result(number).modCM_2f2_f1_course,2,1),'y'),
+plot(x,repmat(circshift(result(number).modCM_2f2_f1_course,circshift_amount),2,1),'y')
 plot(x,20*log10(abs(result(number).l_unmodCM_2f2_f1)*ones(2/f_BT*fs,1)),'y--')
-plot(x,repmat(result(number).modCM_DPf1_course,2,1),'Color',[0 .9 0]),
+plot(x,repmat(circshift(result(number).modCM_DPf1_course,circshift_amount),2,1),'Color',[0 .9 0]),
 plot(x,20*log10(abs(result(number).l_unmodCM_DPf1)*ones(2/f_BT*fs,1)),'g--','Color',[0 .9 0])
-plot(x,repmat(result(number).modCM_DPf2_course,2,1),'w'),
+plot(x,repmat(circshift(result(number).modCM_DPf2_course,circshift_amount),2,1),'w')
 plot(x,20*log10(abs(result(number).l_unmodCM_DPf2)*ones(2/f_BT*fs,1)),'w--')
-plot(x,repmat(result(number).modCM_2f1_course,2,1),'m')
+plot(x,repmat(circshift(result(number).modCM_2f1_course,circshift_amount),2,1),'m')
 plot(x,20*log10(abs(result(number).l_unmodCM_2f1)*ones(2/f_BT*fs,1)),'m--')
-plot(x,repmat(result(number).modCM_f2_course,2,1),'k'),
+plot(x,repmat(circshift(result(number).modCM_f2_course,circshift_amount),2,1),'k')
 plot(x,20*log10(abs(result(number).l_unmodCM_f2)*ones(2/f_BT*fs,1)),'k--')
 
 yLimit = get(gca,'YLim');
-course = mean(yLimit) + diff(yLimit)/2 * result(number).course_BT;
+course = mean(yLimit) + diff(yLimit)/2 * circshift(result(number).course_BT,circshift_amount);
 plot(x, [course; course],'k:'),
 xlim([0 2/f_BT*1000]), grid on, zoom yon,
 [~,idx]=max(course(1:end/2));
@@ -76,23 +80,23 @@ title(['CM modulation (prmSet:' num2str(prmSet) ') L_P=' num2str(l2) 'dB L_B=' n
 figure(get_figure_h([scrsz(1),scrsz(2)+round(scrsz(4)*3/4)-18,...
     round(scrsz(3)/6),round(scrsz(4)/4-40)]));clf
 set(gcf,'Name',['modOAE patterns' results.header.title ' #' num2str(number)])
-plot(x,repmat(result(number).mod_2f1_f2_course,2,1),'b'),
+plot(x,repmat(circshift(result(number).mod_2f1_f2_course,circshift_amount),2,1),'b')
 hold on;
 plot(x,20*log10(abs(result(number).l_unmod_2f1_f2)*ones(2/f_BT*fs,1)),'b--')
-plot(x,repmat(result(number).mod_f2_f1_course,2,1),'r'),
+plot(x,repmat(circshift(result(number).mod_f2_f1_course,circshift_amount),2,1),'r')
 plot(x,20*log10(abs(result(number).l_unmod_f2_f1)*ones(2/f_BT*fs,1)),'r--')
-plot(x,repmat(result(number).mod_2f2_f1_course,2,1),'y'),
+plot(x,repmat(circshift(result(number).mod_2f2_f1_course,circshift_amount),2,1),'y')
 plot(x,20*log10(abs(result(number).l_unmod_2f2_f1)*ones(2/f_BT*fs,1)),'y--')
-plot(x,repmat(result(number).modSF_DPf1_course,2,1),'Color',[0 .9 0]),
+plot(x,repmat(circshift(result(number).modSF_DPf1_course,circshift_amount),2,1),'Color',[0 .9 0])
 plot(x,20*log10(abs(result(number).l_unmod_SF_DPf1)*ones(2/f_BT*fs,1)),'g--','Color',[0 .9 0])
-plot(x,repmat(result(number).modSF_DPf2_course,2,1),'w'),
+plot(x,repmat(circshift(result(number).modSF_DPf2_course,circshift_amount),2,1),'w')
 plot(x,20*log10(abs(result(number).l_unmod_SF_DPf2)*ones(2/f_BT*fs,1)),'w--')
-plot(x,repmat(result(number).modSF_f2_course,2,1),'k'),
-plot(x,repmat(result(number).mod_2f1_course,2,1),'m')
-% plot(x,20*log10(abs(result(number).l_unmodCM_2f1)*ones(2/f_BT*fs,1)),'m--') %curently not a filed in $results
+plot(x,repmat(circshift(result(number).modSF_f2_course,circshift_amount),2,1),'k'),
+plot(x,repmat(circshift(result(number).mod_2f1_course,circshift_amount),2,1),'m')
+plot(x,20*log10(abs(result(number).l_unmodCM_2f1)*ones(2/f_BT*fs,1)),'m--') 
 plot(x,20*log10(abs(result(number).l_unmod_SF_f2)*ones(2/f_BT*fs,1)),'k--')
 yLimit = get(gca,'YLim');
-course = mean(yLimit) + diff(yLimit)/2 * result(number).course_BT;
+course = mean(yLimit) + diff(yLimit)/2 * circshift(result(number).course_BT,circshift_amount);
 plot(x, [course; course],'k:'),
 xlim([0 2/f_BT*1000]), grid on, zoom yon,
 [~,idx]=max(course(1:end/2));
@@ -176,7 +180,7 @@ plot(f1,20*log10(abs(result(number).l_unmod_SF_DPf1)),'co','MarkerEdgeColor',[.6
 plot(f2-f1,20*log10(abs(result(number).l_unmod_f2_f1)),'co','MarkerEdgeColor',[1 .6 .6])
 plot(2*f1-f2,20*log10(abs(result(number).l_unmod_2f1_f2)),'co','MarkerEdgeColor',[.6 .6 1])
 plot(2*f2-f1,20*log10(abs(result(number).l_unmod_2f2_f1)),'co','MarkerEdgeColor',[1 1 .6])
-% plot(2*f1,20*log10(abs(result(number).l_unmod_2f1)),'co','MarkerEdgeColor',[1 .6 1]) %curently not a filed in $results
+plot(2*f1,20*log10(abs(result(number).l_unmod_2f1)),'co','MarkerEdgeColor',[1 .6 1]) 
 grid on,zoom on,axis([1 2.05*f2 -30 110]),set(gca,'FontSize',7),set(gca,'Color',[.8 .8 .8])
 title(['Acoust spectrum modDP (prmSet:' num2str(prmSet) ') L_P=' num2str(l2) 'dB L_B=' num2str(l_BT) 'dB # ' num2str(number)])
 
