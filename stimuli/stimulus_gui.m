@@ -412,7 +412,7 @@ h_fig = figure('Color',get(0,'defaultUicontrolBackgroundColor'), ...
 	'Tag','stimulus_gui_fig');
 
 set(h_fig,'CloseRequestFcn', ...
-	['stimulus_gui(''delete_stimulus_gui'',' num2str(h_fig.Number) ')']),
+	['stimulus_gui(''delete_stimulus_gui'',' num2str(h_fig) ')']),
 
 % initialis ALL appdata (list complete)
 stimulus.waveform = 0;
@@ -604,30 +604,24 @@ global SAMPLE_RATE,
 
 Level_meter(gcbf, 'reset'), % leave in, confirmes plot button press!
 Refresh_waveform(gcbf)
-[waveform,levels] = Get_waveform(gcbf);
-if size(waveform,1) > 1
-	[m,n]=size(waveform); m=2*floor(m/2); if m < 3, return,  end
+[waveform levels] = Get_waveform(gcbf);
+if size(waveform,1) > 1,
+	[m n]=size(waveform); m=2*floor(m/2); if m < 3, return,  end,
 
 	% if ~exist('PLOTS','dir'),
 	%     % create context menu of what plots are available in directory 'PLOTS'
 	%     return,
 	% end,
-    scrsz = get(0,'ScreenSize');
-    position = [0,round(scrsz(4)*3/4)-18,round(scrsz(3)/3.6),...
-        round(scrsz(4)/4-40)];
-    h_fig = findobj('Position',position);
-    if (isempty(h_fig))
-        h_fig = figure;
-    end
-    figure(h_fig), clf
 
-    set(h_fig,'Position',position,'Name','waveform'),
+	h = figure;
+	set(h,'Name','wave'),
 	% plot time course
-	[m,~]=size(waveform);
+	figure(h),
+	[m n]=size(waveform);
 	x=1000*linspace(0,m/SAMPLE_RATE,m)';
 	plot(x,waveform(:,1)), hold on,
 	plot(x,waveform(:,n),'r'), grid on, hold off, title(''), zoom on,
-end
+end,
 Level_meter(gcbf, 'update', levels),
 
 return

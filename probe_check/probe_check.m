@@ -157,14 +157,6 @@ else
     errordlg('sample_rates or min_freqs between left and right calibration differ)!')
     return
 end
-
-% Link PsychPortAudio to the portaudio DLL
-olddir = pwd;
-drv_path = fileparts(which('portaudio_x86.dll'));
-cd(drv_path);
-d = PsychPortAudio('GetDevices', 3);
-cd(olddir);
-
 l = fs/min_freq; % length of a single sweep
 if isempty(calib_left.H_eq),  calib_left.H_eq = ones(l,1); end
 if isempty(calib_right.H_eq),  calib_right.H_eq = ones(l,1); end

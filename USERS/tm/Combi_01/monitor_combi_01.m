@@ -1,8 +1,7 @@
 function result = monitor_combi_01(first,prmSet,results,wave,monitor_settings,plot_flag)
 % TO DO:
-% - Colour-code phase in time course by marker colour (sub-sampled '.'-markers)
-% store mod-lines and compare agerage with avarage modulation time_course
-% - Plot time course as "Bode"-diagram.
+% - "l_unmod*" => "unmod*" , "l_mod*" to "mod*" , "l_SF_modDPf1" =>
+% "modSF_DPf1" 
 
 monitor = 1; % chose monitor
 scrsz = get(0,'MonitorPositions');
@@ -15,7 +14,7 @@ latency = 4500;
 fs = results.stimulus.sample_rate;
 H_mic = results.H_mic;
 % H_mic = [H_mic(1:fs/10,1) ones(fs/10,1)];  !!! uncomment with proper
-% calibration (first when statred with GP experiments in April 2023)
+% calibration (first when started with GP experiments in April 2023)
 % H_mic = ones(fs/10,2);
 if length(H_mic)==fs/10
     H_mic = [H_mic ones(fs/10,1)];
@@ -97,6 +96,7 @@ for q =8:-1:1
         min(result.modCAP((q-1)*CAP_dur+1:q*CAP_dur));
 end
 result.CAP_ampl = CAP_ampl';
+result.CAPmod_course = spline(5-80:10:75+80,repmat(CAP_ampl,1,3),linspace(0,80,fs/f_BT))';
 
 % get time course of BT related to modCAP
 for q=8:-1:1
@@ -135,6 +135,7 @@ if rem(f2,20)~=0  % f1 is multiple of 20
     H_wave_SF = fft(avg_wave)./H_mic;
     result.l_unmod_SF_f2 = H_wave_SF(f2/10+1,1)-result.suppr_f2;
     result.l_unmodCM_f2 = H_wave_SF(f2/10+1,2);
+    result.l_unmod_f2 = H_wave_SF(f2/10+1,1);
 
     % get unmodulated DPOAE and SF0AE at DP primaries
     avg_wave = (wave(30800 + latency+1 : fs/10 + 30800 + latency,:) ...
@@ -150,7 +151,7 @@ if rem(f2,20)~=0  % f1 is multiple of 20
     result.l_unmod_f2_f1 = H_wave_unmod_DPodd((f2-f1)/10+1,1);
     result.l_unmodCM_f2_f1 = H_wave_unmod_DPodd((f2-f1)/10+1,2);
     result.l_unmod_2f2_f1 = H_wave_unmod_DPeven((2*f2-f1)/10+1,1);
-    result.l_unmodCM_2f2_f1 = H_wave_unmod_DPeven((2*f2-f1)/10+1,1);
+    result.l_unmodCM_2f2_f1 = H_wave_unmod_DPeven((2*f2-f1)/10+1,2);
     result.l_unmod_SF_DPf1 = H_wave_unmod_DPeven(f1/10+1,1)-result.suppr_f1;
     result.l_unmodCM_DPf1 = H_wave_unmod_DPeven(f1/10+1,2);
     result.l_unmod_SF_DPf2 = H_wave_unmod_DPodd(f2/10+1,1)-result.suppr_f2;
@@ -191,48 +192,48 @@ if rem(f2,20)~=0  % f1 is multiple of 20
     mod_mask(mod_2f1_f2) = 1;
 
     result.H_mod_2f1_f2 = H_mod_DPodd(mod_2f1_f2,1);
-    course = abs(ifft(H_mod_DPodd(:,1) .* mod_mask));
-    result.mod_2f1_f2_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPodd(:,1) .* mod_mask);
+    result.mod_2f1_f2_course = course(1:fs/f_BT);
 
     result.H_modCM_2f1_f2 = H_mod_DPodd(mod_2f1_f2,2);
-    course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
-    result.modCM_2f1_f2_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPodd(:,2) .* mod_mask);
+    result.modCM_2f1_f2_course = course(1:fs/f_BT);
 
     % f2-f1 suppression time courses
     mod_mask = zeros(l,1);
     mod_mask(mod_f2_f1) = 1;
 
     result.H_mod_f2_f1 = H_mod_DPodd(mod_f2_f1,1);
-    course = abs(ifft(H_mod_DPodd(:,1) .* mod_mask));
-    result.mod_f2_f1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPodd(:,1) .* mod_mask);
+    result.mod_f2_f1_course = course(1:fs/f_BT);
 
     result.H_modCM_f2_f1 = H_mod_DPodd(mod_f2_f1,2);
-    course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
-    result.modCM_f2_f1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPodd(:,2) .* mod_mask);
+    result.modCM_f2_f1_course = course(1:fs/f_BT);
 
     % 2f2-f1 suppression time courses
     mod_mask = zeros(l,1);
     mod_mask(mod_2f2_f1) = 1;
 
     result.H_modCM_2f2_f1 = H_mod_DPeven(mod_2f2_f1,2);
-    course = abs(ifft(H_mod_DPeven(:,2) .* mod_mask));
-    result.modCM_2f2_f1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPeven(:,2) .* mod_mask);
+    result.modCM_2f2_f1_course = course(1:fs/f_BT);
 
     result.H_mod_2f2_f1 = H_mod_DPeven(mod_2f2_f1,1);
-    course = abs(ifft(H_mod_DPeven(:,1) .* mod_mask));
-    result.mod_2f2_f1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPeven(:,1) .* mod_mask);
+    result.mod_2f2_f1_course = course(1:fs/f_BT);
 
     % 2f1 suppression time courses
     mod_mask = zeros(l,1);
     mod_mask(mod_2f1) = 1;
 
     result.H_modCM_2f1 = H_mod_DPeven(mod_2f1,2);
-    course = abs(ifft(H_mod_DPeven(:,2) .* mod_mask));
-    result.modCM_2f1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPeven(:,2) .* mod_mask);
+    result.modCM_2f1_course = course(1:fs/f_BT);
 
     result.H_mod_2f1 = H_mod_DPeven(mod_2f1,1);
-    course = abs(ifft(H_mod_DPeven(:,1) .* mod_mask));
-    result.mod_2f1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPeven(:,1) .* mod_mask);
+    result.mod_2f1_course = course(1:fs/f_BT);
 
     % time courses of f1-SFOAE produced during simulataneously presented primaries and biasing tone
     result.l_SF_modDPf1 = H_mod_DPeven(f1/10+1,1) - result.suppr_f1;
@@ -240,14 +241,14 @@ if rem(f2,20)~=0  % f1 is multiple of 20
     mod_mask(mod_f1) = 1;
 
     result.H_modCM_DPf1 = H_mod_DPeven(mod_f1,2);
-    course = abs(ifft(H_mod_DPeven(:,2) .* mod_mask));
-    result.modCM_DPf1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPeven(:,2) .* mod_mask);
+    result.modCM_DPf1_course = course(1:fs/f_BT);
 
     H = H_mod_DPeven(:,1) .* mod_mask;
     H(f1/10+1)= result.l_SF_modDPf1;
     result.H_mod_DPf1 = H(mod_f1);
-    course = abs(ifft(H));
-    result.modSF_DPf1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H);
+    result.modSF_DPf1_course = course(1:fs/f_BT);
 
     % time courses of f2-SFOAE produced during simulataneously presented primaries and biasing tone
     result.l_SF_modDPf2 = H_mod_DPodd(f2/10+1,1) - result.suppr_f2;
@@ -255,14 +256,14 @@ if rem(f2,20)~=0  % f1 is multiple of 20
     mod_mask(mod_f2) = 1;
 
     result.H_modCM_DPf2 = H_mod_DPodd(mod_f2,2);
-    course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
-    result.modCM_DPf2_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPodd(:,2) .* mod_mask);
+    result.modCM_DPf2_course = course(1:fs/f_BT);
 
     H = H_mod_DPodd(:,1) .* mod_mask;
     H(f2/10+1)= result.l_SF_modDPf2;
     result.H_mod_DPf2 = H(mod_f2);
-    course = abs(ifft(H));
-    result.modSF_DPf2_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H);
+    result.modSF_DPf2_course = course(1:fs/f_BT);
 
 
     %% only f2 primary presented (modSF)
@@ -289,16 +290,17 @@ if rem(f2,20)~=0  % f1 is multiple of 20
     mod_mask(mod_f2) = 1;
 
     result.H_modCM_f2 = result.H_mod_SF(mod_f2,2);
-    course = abs(ifft(result.H_mod_SF(:,2) .* mod_mask));
-    result.modCM_f2_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(result.H_mod_SF(:,2) .* mod_mask);
+    result.modCM_f2_course = course(1:fs/f_BT);
 
     H = result.H_mod_SF(:,1) .* mod_mask;
     H(f2/10+1)= result.l_modSF_f2;
     result.H_mod_f2 = H(mod_f2);
-    course = abs(ifft(H));
-    result.modSF_f2_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H);
+    result.modSF_f2_course = course(1:fs/f_BT);
 
 else % f2 is multiple of 20
+    warning('TM warns: f2 is multiple of 20. CAP might not be sum of in phase and inverted phase onset!')
     avg_wave = (wave(16400 + latency+1 : fs/10 + 16400 + latency,:) ...
         + wave(23600 + latency+1 : fs/10 + 23600 + latency,:))/2;
     H_wave_suppr2 = fft(avg_wave)./H_mic;
@@ -333,9 +335,9 @@ else % f2 is multiple of 20
     result.l_unmodCM_f2_f1 = H_wave_unmod_DPodd((f2-f1)/10+1,2);
     result.l_unmod_2f2_f1 = H_wave_unmod_DPodd((2*f2-f1)/10+1,1);
     result.l_unmodCM_2f2_f1 = H_wave_unmod_DPodd((2*f2-f1)/10+1,2);
-    result.l_unmod_SF_DPf1 = H_wave_unmod_DPodd(f1/10+1,1);
+    result.l_unmod_SF_DPf1 = H_wave_unmod_DPodd(f1/10+1,1)-result.suppr_f1;
     result.l_unmodCM_DPf1 = H_wave_unmod_DPodd(f1/10+1,2);
-    result.l_unmod_SF_DPf2 = H_wave_unmod_DPeven(f2/10+1,1);
+    result.l_unmod_SF_DPf2 = H_wave_unmod_DPeven(f2/10+1,1)-result.suppr_f2;
     result.l_unmodCM_DPf2 = H_wave_unmod_DPeven(f2/10+1,2);
     result.l_unmod_2f1 = H_wave_unmod_DPeven(2*f1/10+1,1);
     result.l_unmodCM_2f1 = H_wave_unmod_DPeven(2*f1/10+1,2);
@@ -373,48 +375,48 @@ else % f2 is multiple of 20
     mod_mask(mod_2f1_f2) = 1;
 
     result.H_mod_2f1_f2 = H_mod_DPeven(mod_2f1_f2,1);
-    course = abs(ifft(H_mod_DPeven(:,1) .* mod_mask));
-    result.mod_2f1_f2_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPeven(:,1) .* mod_mask);
+    result.mod_2f1_f2_course = course(1:fs/f_BT);
 
     result.H_modCM_2f1_f2 = H_mod_DPeven(mod_2f1_f2,2);
-    course = abs(ifft(H_mod_DPeven(:,2) .* mod_mask));
-    result.modCM_2f1_f2_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPeven(:,2) .* mod_mask);
+    result.modCM_2f1_f2_course = course(1:fs/f_BT);
 
     % f2-f1 suppression time courses
     mod_mask = zeros(l,1);
     mod_mask(mod_f2_f1) = 1;
 
     result.H_mod_f2_f1 = H_mod_DPodd(mod_f2_f1,1);
-    course = abs(ifft(H_mod_DPodd(:,1) .* mod_mask));
-    result.mod_f2_f1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPodd(:,1) .* mod_mask);
+    result.mod_f2_f1_course = course(1:fs/f_BT);
 
     result.H_modCM_f2_f1 = H_mod_DPodd(mod_f2_f1,2);
-    course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
-    result.modCM_f2_f1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPodd(:,2) .* mod_mask);
+    result.modCM_f2_f1_course = course(1:fs/f_BT);
 
     % 2f2-f1 suppression time courses
     mod_mask = zeros(l,1);
     mod_mask(mod_2f2_f1) = 1;
 
     result.H_modCM_2f2_f1 = H_mod_DPodd(mod_2f2_f1,2);
-    course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
-    result.modCM_2f2_f1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPodd(:,2) .* mod_mask);
+    result.modCM_2f2_f1_course = course(1:fs/f_BT);
 
     result.H_mod_2f2_f1 = H_mod_DPodd(mod_2f2_f1,1);
-    course = abs(ifft(H_mod_DPodd(:,1) .* mod_mask));
-    result.mod_2f2_f1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPodd(:,1) .* mod_mask);
+    result.mod_2f2_f1_course = course(1:fs/f_BT);
 
     % 2f1 suppression time courses
     mod_mask = zeros(l,1);
     mod_mask(mod_2f1) = 1;
 
     result.H_modCM_2f1 = H_mod_DPeven(mod_2f1,2);
-    course = abs(ifft(H_mod_DPeven(:,2) .* mod_mask));
-    result.modCM_2f1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPeven(:,2) .* mod_mask);
+    result.modCM_2f1_course = course(1:fs/f_BT);
 
     result.H_mod_2f1 = H_mod_DPeven(mod_2f1,1);
-    course = abs(ifft(H_mod_DPeven(:,1) .* mod_mask));
-    result.mod_2f1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPeven(:,1) .* mod_mask);
+    result.mod_2f1_course = course(1:fs/f_BT);
 
     % time courses of f1-SFOAE produced during simulataneously presented primaries and biasing tone
     result.l_SF_modDPf1 = H_mod_DPodd(f1/10+1,1) - result.suppr_f1;
@@ -422,14 +424,14 @@ else % f2 is multiple of 20
     mod_mask(mod_f1) = 1;
 
     result.H_modCM_DPf1 = H_mod_DPodd(mod_f1,2);
-    course = abs(ifft(H_mod_DPodd(:,2) .* mod_mask));
-    result.modCM_DPf1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPodd(:,2) .* mod_mask);
+    result.modCM_DPf1_course = course(1:fs/f_BT);
 
     H = H_mod_DPodd(:,1) .* mod_mask;
     H(f1/10+1)= result.l_SF_modDPf1;
     result.H_mod_DPf1 = H(mod_f1);
-    course = abs(ifft(H));
-    result.modSF_DPf1_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H);
+    result.modSF_DPf1_course = course(1:fs/f_BT);
 
     % time courses of f2-SFOAE produced during simulataneously presented primaries and biasing tone
     result.l_SF_modDPf2 = H_mod_DPeven(f2/10+1,1) - result.suppr_f2;
@@ -437,14 +439,14 @@ else % f2 is multiple of 20
     mod_mask(mod_f2) = 1;
 
     result.H_modCM_DPf2 = H_mod_DPeven(mod_f2,2);
-    course = abs(ifft(H_mod_DPeven(:,2) .* mod_mask));
-    result.modCM_DPf2_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H_mod_DPeven(:,2) .* mod_mask);
+    result.modCM_DPf2_course = course(1:fs/f_BT);
 
     H = H_mod_DPeven(:,1) .* mod_mask;
     H(f2/10+1)= result.l_SF_modDPf2;
     result.H_mod_DPf2 = H(mod_f2);
-    course = abs(ifft(H));
-    result.modSF_DPf2_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H);
+    result.modSF_DPf2_course = course(1:fs/f_BT);
 
 
     %% only f2 primary presented (modSF)
@@ -471,14 +473,14 @@ else % f2 is multiple of 20
     mod_mask(mod_f2) = 1;
 
     result.H_modCM_f2 = result.H_mod_SF(mod_f2,2);
-    course = abs(ifft(result.H_mod_SF(:,2) .* mod_mask));
-    result.modCM_f2_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(result.H_mod_SF(:,2) .* mod_mask);
+    result.modCM_f2_course = course(1:fs/f_BT);
 
     H = result.H_mod_SF(:,1) .* mod_mask;
     H(f2/10+1)= result.l_modSF_f2;
     result.H_mod_f2 = H(mod_f2);
-    course = abs(ifft(H));
-    result.modSF_f2_course = 20*log10(l * course(1:fs/f_BT));
+    course = l * ifft(H);
+    result.modSF_f2_course = course(1:fs/f_BT);
 end
 
 

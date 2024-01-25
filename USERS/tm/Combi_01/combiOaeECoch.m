@@ -263,15 +263,15 @@ env_BT = [zeros(1,((6+1)*9)/f_BTdivFs) ...
 wave(:,1) = [env_1.*tone_1 + env_suppr2.*tone_suppr2 + env_BT.*tone_BT]';
 wave(:,2) = [env_2.*tone_2 + env_suppr1.*tone_suppr1]';
 
-% plot(linspace(0,6,295200), env_1), hold on
-% plot(linspace(0,6,295200), env_2*.9), 
-% plot(linspace(0,6,295200), env_suppr1*.8), 
-% plot(linspace(0,6,295200), env_suppr2*.7), 
-% plot(linspace(0,6,295200), env_BT*1.1), hold off
-% set(gca,'XTick',.05+[0:.15:6]), grid on
+plot(linspace(0,6,295200), env_1), hold on
+plot(linspace(0,6,295200), env_2*.9), 
+plot(linspace(0,6,295200), env_suppr1*.8), 
+plot(linspace(0,6,295200), env_suppr2*.7), 
+plot(linspace(0,6,295200), env_BT*1.1), hold off
+set(gca,'XTick',.05+[0:.15:6]), grid on
 
-% plot(env_1), hold on
-% plot(env_2*.9), 
-% plot(env_suppr1*.8), 
-% plot(env_suppr2*.7), 
-% plot(env_BT*1.1), hold off
+plot(env_1), hold on
+plot(env_2*.9), 
+plot(env_suppr1*.8), 
+plot(env_suppr2*.7), 
+plot(env_BT*1.1), hold off
